@@ -14,10 +14,7 @@
     "react": "latest",
     "react-dom": "latest",
     "recharts": "latest",
-    "lucide-react": "latest",
-    "pg": "^8.16.3",
-    "bcryptjs": "^3.0.2",
-    "jsonwebtoken": "^9.0.2"
+    "lucide-react": "latest"
   },
   "devDependencies": {}
 }
