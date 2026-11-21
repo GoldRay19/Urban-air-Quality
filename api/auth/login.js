@@ -1,4 +1,4 @@
-import { getPool, ensureUsersTable, setSession, safeUser, bcrypt, methodNotAllowed } from "../_lib/auth.js";
+import { getPool, ensureUsersTable, setSession, safeUser, bcrypt, methodNotAllowed } from "../../lib/auth.js";
 let dummyHash;
 export default async function handler(req, res) {
   if (req.method !== "POST") return methodNotAllowed(res, "POST");
