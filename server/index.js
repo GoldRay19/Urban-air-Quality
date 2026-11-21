@@ -4,6 +4,7 @@ import rateLimit from "express-rate-limit";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import pg from "pg";
+import cookieParser from "cookie-parser";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -17,6 +18,7 @@ if (!JWT_SECRET || JWT_SECRET.length < 32) throw new Error("JWT_SECRET must be c
 app.set("trust proxy", 1);
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(express.json({ limit: "20kb" }));
+app.use(cookieParser());
 app.use("/api/auth", rateLimit({ windowMs: 15 * 60 * 1000, limit: 30, standardHeaders: "draft-7", legacyHeaders: false }));
 
 await pool.query(`
@@ -31,9 +33,9 @@ await pool.query(`
 
 const sign = user => jwt.sign({ sub: String(user.id), email: user.email }, JWT_SECRET, { expiresIn: "7d", issuer: "airaware", audience: "airaware-web" });
 const safeUser = row => ({ id: String(row.id), name: row.name, email: row.email, createdAt: row.created_at });
+const setSession = (res, user) => res.cookie("aa_session", sign(user), { httpOnly:true, secure:process.env.NODE_ENV === "production", sameSite:"strict", path:"/", maxAge:7*24*60*60*1000 });
 function auth(req,res,next){
- const raw = req.headers.authorization || "";
- const token = raw.startsWith("Bearer ") ? raw.slice(7) : "";
+ const token = req.cookies?.aa_session || "";
  try { const payload = jwt.verify(token, JWT_SECRET, { issuer: "airaware", audience: "airaware-web" }); req.userId = payload.sub; next(); }
  catch { res.status(401).json({ error: "Your session has expired. Please sign in again." }); }
 }
@@ -48,7 +50,7 @@ app.post("/api/auth/register", async (req,res) => {
  try {
    const hash = await bcrypt.hash(password, 12);
    const result = await pool.query("INSERT INTO users(name,email,password_hash) VALUES($1,$2,$3) RETURNING id,name,email,created_at", [name,email,hash]);
-   const user = safeUser(result.rows[0]); res.status(201).json({ user, token: sign(user) });
+   const user = safeUser(result.rows[0]); setSession(res,user); res.status(201).json({ user });
  } catch (error) { if (error.code === "23505") return res.status(409).json({error:"An account with this email already exists."}); console.error("register",error); res.status(500).json({error:"Could not create your account right now."}); }
 });
 app.post("/api/auth/login", async (req,res) => {
@@ -60,7 +62,7 @@ app.post("/api/auth/login", async (req,res) => {
    const hash = row?.password_hash || await bcrypt.hash("constant-timing-dummy-password", 12);
    const valid = await bcrypt.compare(password,hash);
    if (!row || !valid) return res.status(401).json({error:"Email or password is incorrect."});
-   const user = safeUser(row); res.json({user,token:sign(user)});
+   const user = safeUser(row); setSession(res,user); res.json({user});
  } catch (error) { console.error("login",error); res.status(500).json({error:"Could not sign in right now."}); }
 });
 app.get("/api/auth/me", auth, async (req,res) => {
@@ -68,7 +70,7 @@ app.get("/api/auth/me", auth, async (req,res) => {
  if (!result.rows[0]) return res.status(401).json({error:"Account no longer exists."});
  res.json({user:safeUser(result.rows[0])});
 });
-app.post("/api/auth/logout", (_req,res) => res.json({ok:true}));
+app.post("/api/auth/logout", (_req,res) => { res.clearCookie("aa_session", { httpOnly:true, secure:process.env.NODE_ENV === "production", sameSite:"strict", path:"/" }); res.json({ok:true}); });
 const dist = path.resolve(__dirname,"../dist");
 app.use(express.static(dist,{index:false, maxAge:"1h"}));
 app.use((req,res,next)=>{ if(req.path.startsWith("/api/")) return res.status(404).json({error:"API route not found."}); res.sendFile(path.join(dist,"index.html"),error=>error&&next(error)); });
