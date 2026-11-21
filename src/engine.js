@@ -88,8 +88,8 @@ export const FEATURE_GROUPS = [
 
 export function evaluateAirPlan({ reading, profile = "family", threshold = 100, demo = false }) {
   const aqi = Number.isFinite(Number(reading?.aqi)) ? Number(reading.aqi) : null;
-  const pm25 = Number.isFinite(Number(reading?.pm25)) ? Number(reading.pm25) : null;
-  const input = { aqi, pm25, profile, threshold, live: !demo && reading?.source !== "Illustrative demo data" };
+  const pm25 = reading?.pm25 == null || !Number.isFinite(Number(reading.pm25)) ? null : Number(reading.pm25);
+  const input = { aqi, pm25, profile, threshold, live: Boolean(reading) && !demo && reading?.source !== "Illustrative demo data" };
   const active = rules.filter(([, when]) => when(input)).map(([id,, title, action, reason, priority]) => ({ id, title, action, reason, priority }));
   const rank = { critical: 0, high: 1, normal: 2, positive: 3 };
   active.sort((a,b) => rank[a.priority] - rank[b.priority]);
