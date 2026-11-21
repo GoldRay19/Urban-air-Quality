@@ -1,0 +1,9 @@
+{
+  "name":"AirAware Urban Air Quality Assistant",
+  "short_name":"AirAware",
+  "start_url":"/",
+  "display":"standalone",
+  "background_color":"#f4f7f6",
+  "theme_color":"#0c1724",
+  "description":"Understand local air quality and plan lower-exposure routines."
+}
