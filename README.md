@@ -25,31 +25,18 @@ AirAware is a responsive urban air-quality platform that helps people understand
 - Everyday-language question matching ranks relevant answers using keyword relevance.
 - Relevant rule-engine recommendations are shown alongside answers.
 
-### Authentication
-- Vercel serverless API functions under `/api`.
-- PostgreSQL persistence for account records.
-- bcrypt password hashing and JWT sessions stored in HttpOnly, Secure, SameSite=Strict cookies.
-- Session validation and logout endpoints.
-- Dashboard preferences and reading history remain in browser local storage.
+### Authentication (temporary local mode)
+- Registration and sign-in use browser `localStorage`; no database or server-side auth API is required.
+- Passwords are stored as PBKDF2-SHA-256 verifiers with unique random salts, not as plaintext.
+- Accounts and sessions exist only in the current browser profile and do not sync across devices.
+- This is suitable for a temporary demo, not production-grade authentication. Clearing site storage removes local accounts.
 
-## Deploy on Vercel (only)
+## Deploy on Vercel
 
 1. Import `GoldRay19/Urban-air-Quality` into Vercel and select the Vite framework preset.
-2. Set the build command to `npm run build` and the output directory to `dist` (Vercel usually detects both automatically).
-3. Create a PostgreSQL database with a provider such as Neon or Supabase. Vercel hosts the frontend and API functions; the database is an external managed service.
-4. In Vercel → Project → Settings → Environment Variables, add:
-   - `DATABASE_URL`: the PostgreSQL connection string from your database provider.
-   - `JWT_SECRET`: a cryptographically random secret of at least 32 characters.
-5. Apply the variables to Production (and Preview if desired), redeploy, then test `/api/health`.
-6. Open the deployed URL, register an account, sign out, and sign in again to verify persistence.
-
-Generate a secret locally with:
-
-```bash
-openssl rand -base64 48
-```
-
-The API creates its `users` table automatically on first use. Keep database credentials and JWT secrets only in Vercel environment variables; never commit them to Git.
+2. Set the build command to `npm run build` and output directory to `dist` (Vercel usually detects both automatically).
+3. No database or authentication environment variables are needed for the temporary local account mode.
+4. Deploy, then register and sign in using the same browser and device.
 
 ## Local development
 
@@ -60,13 +47,7 @@ npm install
 npm run dev
 ```
 
-For local API testing, run Vercel's development server so that both the frontend and `/api` functions are available:
-
-```bash
-npx vercel dev
-```
-
-Set `DATABASE_URL` and `JWT_SECRET` in your local Vercel environment or a local `.env` file before testing authentication. A PostgreSQL database must be reachable.
+Authentication runs entirely in the browser during this temporary mode; no API server or database is required.
 
 ## Data, limitations and safety
 
