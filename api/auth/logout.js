@@ -1,4 +1,4 @@
-import { clearSession, methodNotAllowed } from "../_lib/auth.js";
+import { clearSession, methodNotAllowed } from "../../lib/auth.js";
 export default function handler(req, res) {
   if (req.method !== "POST") return methodNotAllowed(res, "POST");
   clearSession(res);
