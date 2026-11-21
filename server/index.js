@@ -57,7 +57,8 @@ app.post("/api/auth/login", async (req,res) => {
  try {
    const result = await pool.query("SELECT id,name,email,password_hash,created_at FROM users WHERE email=$1", [email]);
    const row = result.rows[0];
-   const valid = row ? await bcrypt.compare(password,row.password_hash) : await bcrypt.compare(password,"$2a$12$C6UzMDM.H6dfI/f/IKcEe.4Kz3G7Yq0YwYg0jGv5vW6m2Kq4Y7q1QK");
+   const hash = row?.password_hash || await bcrypt.hash("constant-timing-dummy-password", 12);
+   const valid = await bcrypt.compare(password,hash);
    if (!row || !valid) return res.status(401).json({error:"Email or password is incorrect."});
    const user = safeUser(row); res.json({user,token:sign(user)});
  } catch (error) { console.error("login",error); res.status(500).json({error:"Could not sign in right now."}); }
@@ -70,5 +71,5 @@ app.get("/api/auth/me", auth, async (req,res) => {
 app.post("/api/auth/logout", (_req,res) => res.json({ok:true}));
 const dist = path.resolve(__dirname,"../dist");
 app.use(express.static(dist,{index:false, maxAge:"1h"}));
-app.get("*",(req,res,next)=>{ if(req.path.startsWith("/api/")) return res.status(404).json({error:"API route not found."}); res.sendFile(path.join(dist,"index.html"),error=>error&&next(error)); });
+app.use((req,res,next)=>{ if(req.path.startsWith("/api/")) return res.status(404).json({error:"API route not found."}); res.sendFile(path.join(dist,"index.html"),error=>error&&next(error)); });
 app.listen(port,"0.0.0.0",()=>console.log("AirAware server listening on",port));
