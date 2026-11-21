@@ -1,4 +1,4 @@
-import { getPool, ensureUsersTable, readSession, safeUser, methodNotAllowed } from "../_lib/auth.js";
+import { getPool, ensureUsersTable, readSession, safeUser, methodNotAllowed } from "../../lib/auth.js";
 export default async function handler(req, res) {
   if (req.method !== "GET") return methodNotAllowed(res, "GET");
   const session = readSession(req);
