@@ -14,5 +14,8 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run build
-      - run: node --check server/index.js
+      - run: |
+          for file in api/**/*.js api/*.js; do
+            [ -f "$file" ] && node --check "$file"
+          done
       - run: node --input-type=module -e "import('./src/knowledge.js').then(({KNOWLEDGE}) => { if (KNOWLEDGE.length !== 100) throw new Error('Knowledge base must contain exactly 100 answers'); console.log('Validated 100 knowledge answers'); })"
